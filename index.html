@@ -1432,23 +1432,44 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Touch Swipe Handling for iPad
+// Touch Swipe Handling (Strict Swipe Only - Taps & Vertical Scroll Ignored)
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
+
 document.addEventListener('touchstart', (e) => {
-  touchStartX = e.changedTouches[0].screenX;
+  if (e.touches && e.touches.length === 1) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }
 }, { passive: true });
 
 document.addEventListener('touchend', (e) => {
-  touchEndX = e.changedTouches[0].screenX;
-  handleSwipe();
+  if (e.changedTouches && e.changedTouches.length === 1) {
+    touchEndX = e.changedTouches[0].clientX;
+    touchEndY = e.changedTouches[0].clientY;
+    handleSwipe();
+  }
 }, { passive: true });
 
 function handleSwipe() {
   const diffX = touchEndX - touchStartX;
-  if (diffX < -50) {
-    nextSlide();
-  } else if (diffX > 50) {
-    prevSlide();
+  const diffY = touchEndY - touchStartY;
+
+  // Only trigger slide change if horizontal drag is > 75px AND dominates vertical drag
+  if (Math.abs(diffX) > 75 && Math.abs(diffX) > Math.abs(diffY) * 1.8) {
+    if (diffX < 0) {
+      nextSlide();
+    } else {
+      prevSlide();
+    }
   }
+
+  touchStartX = 0;
+  touchStartY = 0;
+  touchEndX = 0;
+  touchEndY = 0;
 }
 
 // Initialize View & Image Lightbox Click Listeners
