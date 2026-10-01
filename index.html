@@ -513,6 +513,184 @@ html, body {
   cursor: zoom-in;
 }
 
+/* Mobile Responsive Design System */
+@media screen and (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .app-container {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .presentation-viewport {
+    padding: 0;
+    background-color: #0F172A;
+  }
+
+  .presentation-stage {
+    border-radius: 0;
+    box-shadow: none;
+    width: 100vw;
+    height: 100dvh;
+  }
+
+  .keynote-header {
+    height: 52px;
+    padding: 0 14px;
+  }
+
+  .keynote-header .acadally-logo {
+    height: 24px;
+  }
+
+  .header-tagline {
+    display: none;
+  }
+
+  .slide-indicator {
+    font-size: 0.8rem;
+    padding: 3px 10px;
+  }
+
+  .slides-container {
+    height: calc(100dvh - 104px);
+    padding: 8px 6px;
+  }
+
+  .slide {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: none;
+    border-radius: 12px;
+    padding: 14px 12px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: none;
+    border: 1px solid var(--border-light);
+  }
+
+  /* Mobile Typography */
+  .slide-main-title {
+    font-size: 1.3rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 4px !important;
+  }
+
+  .slide-subtitle {
+    font-size: 0.85rem !important;
+    line-height: 1.35 !important;
+    margin-bottom: 10px !important;
+  }
+
+  .slide-badge {
+    font-size: 0.68rem !important;
+    padding: 3px 10px !important;
+  }
+
+  /* Responsive Grids */
+  [style*="display: grid"],
+  [style*="display:grid"],
+  [style*="grid-template-columns"],
+  .slide-split-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Banner Flex layout */
+  .philosophy-banner,
+  [style*="display: flex"][style*="flex-direction: row"],
+  [style*="display:flex"][style*="flex-direction:row"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 12px 14px !important;
+  }
+
+  .philosophy-banner {
+    text-align: left !important;
+  }
+
+  .philosophy-banner-title {
+    font-size: 0.95rem !important;
+  }
+
+  .philosophy-banner-text {
+    font-size: 0.92rem !important;
+    line-height: 1.35 !important;
+  }
+
+  /* Interactive Start Button */
+  .start-btn {
+    font-size: 1.2rem !important;
+    padding: 14px 24px !important;
+    width: 90% !important;
+    max-width: 300px !important;
+    justify-content: center !important;
+  }
+
+  /* Images & Screenshots */
+  .card-screenshot-img {
+    height: 170px !important;
+    object-fit: cover !important;
+  }
+
+  .card-screenshot-img-large {
+    max-height: 240px !important;
+  }
+
+  /* Slide 10 Cartoon graphic image */
+  #slide-10 img {
+    max-height: 260px !important;
+  }
+
+  /* Card Padding */
+  .glass-card, .feature-card, .static-probing-card {
+    padding: 12px 14px !important;
+  }
+
+  /* Mobile Navigation Bar */
+  .mobile-nav-bar {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    height: 52px;
+    padding: 0 16px;
+    background: #0F172A;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  .mobile-nav-btn {
+    background: var(--color-blue);
+    color: #FFFFFF;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .mobile-nav-indicator {
+    color: #94A3B8;
+    font-weight: 700;
+    font-size: 0.85rem;
+    font-family: monospace;
+  }
+}
+
+.mobile-nav-bar {
+  display: none;
+}
+
   </style>
 </head>
 <body>
@@ -1150,6 +1328,13 @@ html, body {
     </div> <!-- /presentation-viewport -->
   </div> <!-- /app-container -->
 
+  <!-- Mobile Navigation Bar -->
+  <div class="mobile-nav-bar">
+    <button onclick="prevSlide()" id="mobile-prev-btn" class="mobile-nav-btn">&larr; Prev</button>
+    <span class="mobile-nav-indicator" id="mobile-slide-indicator">1 / 10</span>
+    <button onclick="nextSlide()" id="mobile-next-btn" class="mobile-nav-btn">Next &rarr;</button>
+  </div>
+
   <script>
 /* ==========================================================================
    AcadAlly Presentation Engine Script
@@ -1167,27 +1352,28 @@ function updatePresentation() {
   document.getElementById('progress-bar').style.width = progressPercent + '%';
   document.getElementById('slide-indicator').innerText = currentSlide + ' / ' + totalSlides;
 
+  const mobileInd = document.getElementById('mobile-slide-indicator');
+  if (mobileInd) mobileInd.innerText = currentSlide + ' / ' + totalSlides;
+
   const prevBtn = document.getElementById('prev-btn');
   const nextBtn = document.getElementById('next-btn');
+  const mobPrev = document.getElementById('mobile-prev-btn');
+  const mobNext = document.getElementById('mobile-next-btn');
 
-  if (prevBtn) {
-    if (currentSlide === 1) {
-      prevBtn.style.opacity = '0.3';
-      prevBtn.style.pointerEvents = 'none';
-    } else {
-      prevBtn.style.opacity = '1';
-      prevBtn.style.pointerEvents = 'auto';
-    }
+  if (currentSlide === 1) {
+    if (prevBtn) { prevBtn.style.opacity = '0.3'; prevBtn.style.pointerEvents = 'none'; }
+    if (mobPrev) { mobPrev.style.opacity = '0.4'; mobPrev.disabled = true; }
+  } else {
+    if (prevBtn) { prevBtn.style.opacity = '1'; prevBtn.style.pointerEvents = 'auto'; }
+    if (mobPrev) { mobPrev.style.opacity = '1'; mobPrev.disabled = false; }
   }
 
-  if (nextBtn) {
-    if (currentSlide === totalSlides) {
-      nextBtn.style.opacity = '0.3';
-      nextBtn.style.pointerEvents = 'none';
-    } else {
-      nextBtn.style.opacity = '1';
-      nextBtn.style.pointerEvents = 'auto';
-    }
+  if (currentSlide === totalSlides) {
+    if (nextBtn) { nextBtn.style.opacity = '0.3'; nextBtn.style.pointerEvents = 'none'; }
+    if (mobNext) { mobNext.style.opacity = '0.4'; mobNext.disabled = true; }
+  } else {
+    if (nextBtn) { nextBtn.style.opacity = '1'; nextBtn.style.pointerEvents = 'auto'; }
+    if (mobNext) { mobNext.style.opacity = '1'; mobNext.disabled = false; }
   }
 
   document.querySelectorAll('.slide').forEach((slide, idx) => {
