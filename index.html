@@ -133,6 +133,25 @@ html, body {
   font-family: monospace;
 }
 
+.hdr-nav-btn {
+  background: var(--color-blue);
+  color: #FFFFFF;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.25);
+  transition: all 0.2s ease;
+}
+
+.hdr-nav-btn:hover {
+  background: #1D4ED8;
+  transform: scale(1.05);
+}
+
 .keynote-progress-bar {
   position: absolute;
   top: 0;
@@ -169,21 +188,19 @@ html, body {
   border: 1px solid #CBD5E1;
   box-shadow: var(--shadow-slide);
   padding: 24px 32px;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  display: flex;
+  display: none;
   flex-direction: column;
   justify-content: flex-start;
-  transform: translate3d(0, 0, 0);
-  will-change: opacity, transform;
   overflow-y: auto;
+  z-index: 10;
 }
 
 .slide.active {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 50;
 }
 
 /* Custom Scrollbar inside slides if content is long */
@@ -454,6 +471,7 @@ html, body {
   justify-content: center;
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition: opacity 0.3s ease, visibility 0.3s ease;
   padding: 24px;
 }
@@ -461,6 +479,7 @@ html, body {
 .image-modal-overlay.active {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
 }
 
 .image-modal-content {
@@ -712,7 +731,11 @@ html, body {
         <header class="keynote-header">
           <img src="https://storage.googleapis.com/leap2storage-gcp/leap2-data/media/acadally-web/acadally-header-main-logo.svg" alt="Acadally Logo" class="acadally-logo">
           <div class="header-tagline">AcadAlly — Preventive Learning Infrastructure</div>
-          <div class="slide-indicator" id="slide-indicator">1 / 10</div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button onclick="goToPrevSlide()" id="prev-btn" class="hdr-nav-btn" title="Previous Slide">&larr; Prev</button>
+            <div class="slide-indicator" id="slide-indicator">1 / 10</div>
+            <button onclick="goToNextSlide()" id="next-btn" class="hdr-nav-btn" title="Next Slide">Next &rarr;</button>
+          </div>
         </header>
         <div class="keynote-progress-bar" id="progress-bar"></div>
 
@@ -724,10 +747,10 @@ html, body {
             <div style="max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 40px 20px;">
               
               <!-- Official Logo -->
-              <img src="https://storage.googleapis.com/leap2storage-gcp/leap2-data/media/acadally-web/acadally-header-main-logo.svg" alt="AcadAlly Logo" style="height: 85px; max-width: 320px; object-fit: contain; margin-bottom: 48px;">
+              <img src="https://storage.googleapis.com/leap2storage-gcp/leap2-data/media/acadally-web/acadally-header-main-logo.svg" alt="AcadAlly Logo" style="height: 85px; max-width: 320px; object-fit: contain; margin-bottom: 44px;">
               
               <!-- Interactive Entry Button: Let's Understand Learning -->
-              <button onclick="nextSlide()" class="start-btn animate-element" style="margin-bottom: 40px;">
+              <button onclick="goToNextSlide()" id="start-btn-slide1" type="button" class="start-btn animate-element" style="margin-bottom: 32px; position: relative; z-index: 50; cursor: pointer;">
                 <span>Let's Understand Learning</span>
                 <span style="font-size: 2.4rem; font-weight: 800;">&rarr;</span>
               </button>
@@ -1330,9 +1353,9 @@ html, body {
 
   <!-- Mobile Navigation Bar -->
   <div class="mobile-nav-bar">
-    <button onclick="prevSlide()" id="mobile-prev-btn" class="mobile-nav-btn">&larr; Prev</button>
+    <button onclick="goToPrevSlide()" id="mobile-prev-btn" class="mobile-nav-btn">&larr; Prev</button>
     <span class="mobile-nav-indicator" id="mobile-slide-indicator">1 / 10</span>
-    <button onclick="nextSlide()" id="mobile-next-btn" class="mobile-nav-btn">Next &rarr;</button>
+    <button onclick="goToNextSlide()" id="mobile-next-btn" class="mobile-nav-btn">Next &rarr;</button>
   </div>
 
   <script>
@@ -1342,18 +1365,22 @@ html, body {
 
 let currentSlide = 1;
 const totalSlides = 10;
-let isAnimating = false;
 
 let touchStartX = 0;
+let touchStartY = 0;
 let touchEndX = 0;
+let touchEndY = 0;
 
 function updatePresentation() {
   const progressPercent = (currentSlide / totalSlides) * 100;
-  document.getElementById('progress-bar').style.width = progressPercent + '%';
-  document.getElementById('slide-indicator').innerText = currentSlide + ' / ' + totalSlides;
+  const pBar = document.getElementById('progress-bar');
+  if (pBar) pBar.style.width = progressPercent + '%';
 
-  const mobileInd = document.getElementById('mobile-slide-indicator');
-  if (mobileInd) mobileInd.innerText = currentSlide + ' / ' + totalSlides;
+  const ind = document.getElementById('slide-indicator');
+  if (ind) ind.innerText = currentSlide + ' / ' + totalSlides;
+
+  const mobInd = document.getElementById('mobile-slide-indicator');
+  if (mobInd) mobInd.innerText = currentSlide + ' / ' + totalSlides;
 
   const prevBtn = document.getElementById('prev-btn');
   const nextBtn = document.getElementById('next-btn');
@@ -1379,31 +1406,33 @@ function updatePresentation() {
   document.querySelectorAll('.slide').forEach((slide, idx) => {
     const slideNum = idx + 1;
     if (slideNum === currentSlide) {
+      slide.style.setProperty('display', 'flex', 'important');
+      slide.style.setProperty('opacity', '1', 'important');
+      slide.style.setProperty('visibility', 'visible', 'important');
+      slide.style.setProperty('pointer-events', 'auto', 'important');
       slide.classList.add('active');
-      gsap.fromTo(slide, 
-        { opacity: 0, scale: 0.97 },
-        { opacity: 1, scale: 1, duration: 0.45, ease: 'power2.out' }
-      );
     } else {
+      slide.style.setProperty('display', 'none', 'important');
+      slide.style.setProperty('opacity', '0', 'important');
+      slide.style.setProperty('visibility', 'hidden', 'important');
+      slide.style.setProperty('pointer-events', 'none', 'important');
       slide.classList.remove('active');
     }
   });
 }
 
-function nextSlide() {
-  if (isAnimating || currentSlide >= totalSlides) return;
-  isAnimating = true;
-  currentSlide++;
-  updatePresentation();
-  setTimeout(() => { isAnimating = false; }, 450);
+function goToNextSlide() {
+  if (currentSlide < totalSlides) {
+    currentSlide++;
+    updatePresentation();
+  }
 }
 
-function prevSlide() {
-  if (isAnimating || currentSlide <= 1) return;
-  isAnimating = true;
-  currentSlide--;
-  updatePresentation();
-  setTimeout(() => { isAnimating = false; }, 450);
+function goToPrevSlide() {
+  if (currentSlide > 1) {
+    currentSlide--;
+    updatePresentation();
+  }
 }
 
 function openImageModal(src, alt) {
@@ -1421,23 +1450,19 @@ function closeImageModal() {
   if (modal) modal.classList.remove('active');
 }
 
-// Keyboard Navigation & Escape listener
+// Keyboard Navigation
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeImageModal();
-  } else if (e.key === 'ArrowRight' || e.key === ' ') {
-    nextSlide();
-  } else if (e.key === 'ArrowLeft') {
-    prevSlide();
+  } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter' || e.key === 'PageDown') {
+    if (e.key === ' ') e.preventDefault();
+    goToNextSlide();
+  } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+    goToPrevSlide();
   }
 });
 
-// Touch Swipe Handling (Strict Swipe Only - Taps & Vertical Scroll Ignored)
-let touchStartX = 0;
-let touchStartY = 0;
-let touchEndX = 0;
-let touchEndY = 0;
-
+// Touch Swipe Handling
 document.addEventListener('touchstart', (e) => {
   if (e.touches && e.touches.length === 1) {
     touchStartX = e.touches[0].clientX;
@@ -1457,12 +1482,11 @@ function handleSwipe() {
   const diffX = touchEndX - touchStartX;
   const diffY = touchEndY - touchStartY;
 
-  // Only trigger slide change if horizontal drag is > 75px AND dominates vertical drag
   if (Math.abs(diffX) > 75 && Math.abs(diffX) > Math.abs(diffY) * 1.8) {
     if (diffX < 0) {
-      nextSlide();
+      goToNextSlide();
     } else {
-      prevSlide();
+      goToPrevSlide();
     }
   }
 
@@ -1472,7 +1496,7 @@ function handleSwipe() {
   touchEndY = 0;
 }
 
-// Initialize View & Image Lightbox Click Listeners
+// Initialize View & Click Listeners
 window.addEventListener('DOMContentLoaded', () => {
   updatePresentation();
 
